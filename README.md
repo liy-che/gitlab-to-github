@@ -1,4 +1,4 @@
-# GitLab-to GitHub
+# GitLab-to-GitHub
 A Shell Python sicript for transferring repositories from GitLab to GitHub using APIs
 
 ## How It Works
