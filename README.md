@@ -1,5 +1,5 @@
 # GitLab-to GitHub
-A Shell Python script for transferring repositories from GitLab to GitHub
+A Shell Python sicript for transferring repositories from GitLab to GitHub using APIs
 
 ## How It Works
 1. Create empty private repository on GitHub
@@ -17,5 +17,5 @@ A Shell Python script for transferring repositories from GitLab to GitHub
 4. `pip install -r requirements.txt` to install dependencies
 
 ### Running the Script
-`shellpy transferRepo.spy <GITLAB_TOKEN_FILE> <GITHUB_TOKEN_FILE>`
+`shellpy transferRepos.spy <GITLAB_TOKEN_FILE> <GITHUB_TOKEN_FILE>`
 
