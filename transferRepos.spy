@@ -1,8 +1,12 @@
+'''
+Usage: shellpy transferRepos.spy GITLAB_TOKEN_FILE GITHUB_TOKEN_FILE
+'''
+
 import sys
-import argparse
 import tempfile
 import gitlab
 from github import Github
+from shellpython.helpers import Dir
 
 
 def get_token(file_path):
@@ -33,14 +37,14 @@ def get_gl(gl, excluded):
     return gl_projects
 
 
-def generate_name(gl_user, project, gh_projects):
+def generate_name(gl_user, project, gh_projects, added_repos):
     '''Generate new name for github repo'''
     new_name = project.name
     proj_user = project.owner['username']
     if (proj_user != gl_user):
         new_name = proj_user + '-' + new_name
 
-    while (new_name in gh_projects):
+    while (new_name in gh_projects or new_name in added_repos):
         new_name = input(f'{new_name} already exists, input a new name or enter to skip: ')
 
     return new_name
@@ -72,26 +76,29 @@ if __name__ == '__main__':
     gh_projects = [proj.name for proj in gh_projects]
 
     create = input('Confirm making repos?: ').lower()
+    added_repos = []
 
     if (create == 'y' or create == 'yes'):
-        print('>>> New repos made in github <<<')
-        with tempfile.TemporaryDirectory() as dirpath:
+        with tempfile.TemporaryDirectory() as dir_path:
             for project in gl_projects[:1]:
-                new_proj_name = generate_name(gl_user, project, gh_projects)
-                if (new_proj_name == ''): continue
-                print(new_proj_name)
+                new_repo_name = generate_name(gl_user, project, gh_projects, added_repos)
+                if (new_repo_name == ''): continue
 
                 # make private repo on github
-                new_repo = gh.get_user().create_repo(name=new_proj_name, private=True)
+                new_repo = gh.get_user().create_repo(name=new_repo_name, private=True)
                 new_remote_url = new_repo.clone_url
-                gh_projects.append(new_proj_name)
+                added_repos.append(new_repo_name)
 
                 # clone gitlab project onto local computer
                 proj_url = project.http_url_to_repo
-                clone_path = dirpath + f'/{new_proj_name}'
-                print(clone_path)
+                clone_path = dir_path + '/' + new_repo_name
                 `git clone {proj_url} {clone_path}
 
-                # update remote repo url
-                `cd {clone_path} && git remote set-url origin {new_remote_url}
-            path(dirpath)
+                # update remote repo url and push to new github repo
+                with Dir(clone_path):
+                    `git remote set-url origin {new_remote_url}
+                    `git push --all
+
+    print('Repos successfully copied to GitHub:')
+    for repo in added_repos:
+        print(repo)

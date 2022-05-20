@@ -13,7 +13,7 @@ A Shell Python sicript for transferring repositories from GitLab to GitHub using
 ### Setup
 1. git clone this repo
 2. cd into the repo clone
-3. create and activate virtual environment
+3. create and activate virtual environment ([tutorial](https://python.land/virtual-environments/virtualenv))
 4. `pip install -r requirements.txt` to install dependencies
 
 ### Running the Script
