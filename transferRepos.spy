@@ -8,11 +8,11 @@ from github import Github
 def get_token(file_path):
     '''Read in token from file specified by file_path'''
     try:
-	    with open(file_path, 'r') as f:
-	        return f.readline()
+        with open(file_path, 'r') as f:
+            return f.readline()
     except FileNotFoundError:
-	    print(f'{file_path} does not exist')
-	    exit(1)
+        print(f'{file_path} does not exist')
+        exit(1)
 
 
 def auth_user(gl_token, gh_token):
@@ -24,13 +24,13 @@ def auth_user(gl_token, gh_token):
 
 
 def get_gl(gl, excluded):
-	'''Get gitlab projects (all private projects accessible by user and all user's public projects)'''
-	gl_projects = gl.projects.list(all=True, visibility='private');
-	gl_projects += gl.projects.list(all=True, visibility='public', owned=True)
+    '''Get gitlab projects (all private projects accessible by user and all user's public projects)'''
+    gl_projects = gl.projects.list(all=True, visibility='private');
+    gl_projects += gl.projects.list(all=True, visibility='public', owned=True)
 
-	gl_projects = [proj for proj in gl_projects if proj.id not in excluded_ids]
+    gl_projects = [proj for proj in gl_projects if proj.id not in excluded_ids]
 
-	return gl_projects
+    return gl_projects
 
 
 def generate_name(gl_user, project, gh_projects):
@@ -81,23 +81,17 @@ if __name__ == '__main__':
                 if (new_proj_name == ''): continue
                 print(new_proj_name)
 
-				# make private repo on github
+                # make private repo on github
                 new_repo = gh.get_user().create_repo(name=new_proj_name, private=True)
                 new_remote_url = new_repo.clone_url
                 gh_projects.append(new_proj_name)
 
-				# clone gitlab project onto local computer
+                # clone gitlab project onto local computer
                 proj_url = project.http_url_to_repo
                 clone_path = dirpath + f'/{new_proj_name}'
                 print(clone_path)
                 `git clone {proj_url} {clone_path}
 
-				# update .git/config file
-            print(dirpath)
-    result = `ls ~/downloads
-    print(result.stdout)
-    result = `pwd
-    print(result.stdout)
-	
-
-
+                # update remote repo url
+                `cd {clone_path} && git remote set-url origin {new_remote_url}
+            path(dirpath)

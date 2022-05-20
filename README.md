@@ -4,7 +4,7 @@ A Shell Python sicript for transferring repositories from GitLab to GitHub using
 ## How It Works
 1. Create empty private repository on GitHub
 2. Clone desired GitLab repository to local temp folder
-3. Update remote repo url in the .git/config file of the GitLab repo clone
+3. Update remote repo url in GitLab repo clone config
 4. `git push --all` in the GitLab repo clone to push to GitHub repo created in **Step 1**
 5. Delete temp folder on local machine
 
