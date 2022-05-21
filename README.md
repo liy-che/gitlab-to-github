@@ -24,5 +24,5 @@ pip install -r requirements.txt
 
 ### Running the Script
 ```
-python transferRepos.py <GITLAB_TOKEN_FILE> <GITHUB_TOKEN_FILE>
+python importRepos.py <GITLAB_TOKEN_FILE> <GITHUB_TOKEN_FILE>
 ```
