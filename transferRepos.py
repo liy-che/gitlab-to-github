@@ -1,12 +1,12 @@
 '''
-Usage: shellpy transferRepos.spy GITLAB_TOKEN_FILE GITHUB_TOKEN_FILE
+Usage: python transferRepos.py GITLAB_TOKEN_FILE GITHUB_TOKEN_FILE
 '''
 
 import sys
+import subprocess
 import tempfile
 import gitlab
 from github import Github
-from shellpython.helpers import Dir
 
 
 def get_token(file_path):
@@ -53,7 +53,7 @@ def generate_name(gl_user, project, gh_projects, added_repos):
 if __name__ == '__main__':
     if (len(sys.argv) != 3):
     	filename = os.path.basename(__file__)
-    	print(f'Usage: shellpy {filename} GITLAB_TOKEN_FILE GITHUB_TOKEN_FILE')
+    	print(f'Usage: python {filename} GITLAB_TOKEN_FILE GITHUB_TOKEN_FILE')
     	exit(1)
 
     # read in tokens
@@ -92,13 +92,16 @@ if __name__ == '__main__':
                 # clone gitlab project onto local computer
                 proj_url = project.http_url_to_repo
                 clone_path = dir_path + '/' + new_repo_name
-                `git clone {proj_url} {clone_path}
+                # git clone {proj_url} {clone_path}
+                subprocess.run(["git", "clone", proj_url, clone_path], stdout=subprocess.DEVNULL)
 
                 # update remote repo url and push to new github repo
-                with Dir(clone_path):
-                    `git remote set-url origin {new_remote_url}
-                    `git push --all
+                subprocess.run(["git", "-C", clone_path, "remote", "set-url", "origin", new_remote_url], stdout=subprocess.DEVNULL)
+                subprocess.run(["git", "-C", clone_path, "push", "--all"], stdout=subprocess.DEVNULL)
+                # with Dir(clone_path):
+                    # `git remote set-url origin {new_remote_url}
+                    # `git push --all
 
-    print('Repos successfully copied to GitHub:')
-    for repo in added_repos:
-        print(repo)
+        print('Repos successfully copied to GitHub:')
+        for repo in added_repos:
+            print(repo)
