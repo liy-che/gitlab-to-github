@@ -2,11 +2,26 @@
 Usage: python importRepos.py GITLAB_TOKEN_FILE GITHUB_TOKEN_FILE
 '''
 
+import os
 import sys
 import subprocess
 import tempfile
-import gitlab
+from gitlab import Gitlab
+from gitlab.exceptions import GitlabAuthenticationError
 from github import Github
+from github.GithubException import BadCredentialsException
+from requests.exceptions import ConnectionError
+
+
+# TODO
+GITLAB_URL = 'https://gitlab.eecs.umich.edu' # example: 'https://gitlab.example.com'
+EXCLUDED_IDS = [988, 952] # excluded gitlab project ids for import, example: [123, 345]
+
+
+def show_error(msg):
+    '''Show error message and exit program'''
+    print(msg)
+    exit(1)
 
 
 def get_token(file_path):
@@ -15,24 +30,22 @@ def get_token(file_path):
         with open(file_path, 'r') as f:
             return f.readline()
     except FileNotFoundError:
-        print(f'{file_path} does not exist')
-        exit(1)
+        show_error(f'{file_path} does not exist')
 
 
 def auth_user(gl_token, gh_token):
     '''Authenicate on gitlab and github'''
-    gl = gitlab.Gitlab(url='https://gitlab.umich.edu', private_token=gl_token)
-
+    gl = Gitlab(url=GITLAB_URL, private_token=gl_token)
     gh = Github(gh_token)
     return gl, gh
 
 
-def get_gl(gl, excluded):
+def get_gl_projects(gl):
     '''Get gitlab projects (all private projects accessible by user and all user's public projects)'''
     gl_projects = gl.projects.list(all=True, visibility='private');
     gl_projects += gl.projects.list(all=True, visibility='public', owned=True)
 
-    gl_projects = [proj for proj in gl_projects if proj.id not in excluded_ids]
+    gl_projects = [proj for proj in gl_projects if proj.id not in EXCLUDED_IDS]
 
     return gl_projects
 
@@ -52,9 +65,8 @@ def generate_name(gl_user, project, gh_projects, added_repos):
 
 if __name__ == '__main__':
     if (len(sys.argv) != 3):
-    	filename = os.path.basename(__file__)
-    	print(f'Usage: python {filename} GITLAB_TOKEN_FILE GITHUB_TOKEN_FILE')
-    	exit(1)
+        filename = os.path.basename(__file__)
+        show_error(f'Usage: python {filename} GITLAB_TOKEN_FILE GITHUB_TOKEN_FILE')
 
     # read in tokens
     gl_token_path = sys.argv[1]
@@ -64,23 +76,31 @@ if __name__ == '__main__':
     gh_token = get_token(gh_token_path)
     gl, gh = auth_user(gl_token, gh_token)
 
-    # get gitlab projects for import
-    excluded_ids = [988, 952]
-    gl_projects = get_gl(gl, excluded_ids)
-
-    gl.auth()
+    try:
+        gl.auth()
+    except ConnectionError:
+        show_error('Connection failed. Check GitLab url')
+    except GitlabAuthenticationError:
+        show_error('Authentication failed. Check GitLab token')
     gl_user = gl.user.username
-    
+
+    # get gitlab projects for import
+    gl_projects = get_gl_projects(gl)
+
     # Create private repos on github
     gh_projects = gh.get_user().get_repos(affiliation='owner');
-    gh_projects = [proj.name for proj in gh_projects]
+
+    try:
+        gh_projects = [proj.name for proj in gh_projects]
+    except BadCredentialsException:
+        show_error('Authentication failed. Check GitHub token')
 
     create = input('Confirm making repos?: ').lower()
     added_repos = []
 
     if (create == 'y' or create == 'yes'):
         with tempfile.TemporaryDirectory() as dir_path:
-            for project in gl_projects[:1]:
+            for project in gl_projects:
                 new_repo_name = generate_name(gl_user, project, gh_projects, added_repos)
                 if (new_repo_name == ''): continue
 
