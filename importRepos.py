@@ -14,8 +14,8 @@ from requests.exceptions import ConnectionError
 
 
 # TODO
-GITLAB_URL = 'https://gitlab.eecs.umich.edu' # example: 'https://gitlab.example.com'
-EXCLUDED_IDS = [988, 952] # excluded gitlab project ids for import, example: [123, 345]
+GITLAB_URL = '' # example: 'https://gitlab.example.com'
+EXCLUDED_IDS = [] # excluded gitlab project ids for import, example: [123, 345]
 
 
 def show_error(msg):
@@ -43,7 +43,7 @@ def auth_user(gl_token, gh_token):
 def get_gl_projects(gl):
     '''Get gitlab projects (all private projects accessible by user and all user's public projects)'''
     gl_projects = gl.projects.list(all=True, visibility='private');
-    gl_projects += gl.projects.list(all=True, visibility='public', owned=True)
+    gl_projects += gl.projects.list(all=True, visibility='public', min_access_level=30)
 
     gl_projects = [proj for proj in gl_projects if proj.id not in EXCLUDED_IDS]
 
@@ -52,12 +52,12 @@ def get_gl_projects(gl):
 
 def generate_name(gl_user, project, gh_projects, added_repos):
     '''Generate new name for github repo'''
-    new_name = project.name
+    new_name = '-'.join(project.name.split())
     proj_user = project.owner['username']
     if (proj_user != gl_user):
         new_name = proj_user + '-' + new_name
 
-    while (new_name in gh_projects or new_name in added_repos):
+    while ((new_name.lower() in gh_projects) or (new_name.lower() in added_repos)):
         new_name = input(f'{new_name} already exists, input a new name or enter to skip: ')
 
     return new_name
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     gh_projects = gh.get_user().get_repos(affiliation='owner');
 
     try:
-        gh_projects = [proj.name for proj in gh_projects]
+        gh_projects = [proj.name.lower() for proj in gh_projects]
     except BadCredentialsException:
         show_error('Authentication failed. Check GitHub token')
 
@@ -101,6 +101,7 @@ if __name__ == '__main__':
     if (create == 'y' or create == 'yes'):
         with tempfile.TemporaryDirectory() as dir_path:
             for project in gl_projects:
+                print('Importing (' + project.name + ')')
                 new_repo_name = generate_name(gl_user, project, gh_projects, added_repos)
                 if (new_repo_name == ''): continue
 
@@ -117,6 +118,8 @@ if __name__ == '__main__':
                 # update remote repo url and push to new github repo
                 subprocess.run(["git", "-C", clone_path, "remote", "set-url", "origin", new_remote_url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 subprocess.run(["git", "-C", clone_path, "push", "--all"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+                print('--------------------------------------------------------')
 
         print('Repos successfully copied to GitHub:')
         for repo in added_repos:
