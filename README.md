@@ -1,5 +1,5 @@
 # GitLab-to-GitHub
-A Python script for importing GitLab repositories to GitHub through APIs
+A Python script for importing GitLab repositories into GitHub through APIs
 
 ## How It Works
 1. Create empty private repository on GitHub
