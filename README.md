@@ -16,11 +16,13 @@ A Python script for importing GitLab repositories into GitHub through APIs
 3. Cd into the repo clone
 4. Create and activate virtual environment ([tutorial](https://python.land/virtual-environments/virtualenv))
 5. Install dependencies
+6. Complete TODO at the top of importRepos.py
 ```
 git clone https://github.com/liy-che/gitlab-to-github.git
 cd gitlab-to-github
 python -m venv venv
 pip install -r requirements.txt
+# open and complete importRepos.py TODO
 ```
 
 ### Running the Script
